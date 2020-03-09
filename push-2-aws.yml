@@ -1,1 +1,41 @@
-1
+---
+- name: "Pushing new image to AWS"
+  hosts: localhost
+  connection: local
+  gather_facts: true
+  tasks:
+
+  - name: Moving built AMI to S3 Bucket
+    aws_s3:
+      access_key: "{{ access_key }}"
+      secret_key: "{{ secret_key }}"
+      bucket: imagebuilder-images
+      object: /ami/RHEL-{{ ansible_distribution_version }}-{{ ansible_date_time.date }}-disk.ami
+      src: /home/{{ ansible_user_id }}/RHEL-{{ ansible_distribution_version }}-{{ ansible_date_time.date }}-disk.ami
+      mode: put
+
+  - name: Change containers.json for new image
+    blockinfile:
+      path: /home/{{ ansible_user_id }}/containers.json
+      marker: ""
+      block: |
+             x { "Description": "RHEL Image", "Format": "raw", "UserBucket": { "S3Bucket": "imagebuilder-images", "S3Key": "ami/RHEL-{{ ansible_distribution_version }}-{{ ansible_date_time.date }}-disk.ami" }}
+
+  - name: Ansible replace string example
+    replace:
+      path: /home/{{ ansible_user_id }}/containers.json
+      regexp: 'x'
+      replace: ""
+
+  - name: Import image as snapshot to EC2
+    shell: aws ec2 import-snapshot --disk-container file://containers.json
+
+  - name: Remove containers.json
+    file:
+      path: /home/{{ ansible_user_id }}/containers.json
+      state: absent
+
+  - name: Create empty containers.json
+    file:
+      path: /home/{{ ansible_user_id }}/containers.json
+      state: touch

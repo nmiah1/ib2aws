@@ -1,1 +1,35 @@
-1
+---
+- name: "Creating an ami image using cockpit"
+  hosts: localhost
+  connection: local
+  gather_facts: true
+  tasks:
+
+   - name: Composing an image using composer-cli
+     shell: composer-cli compose start example-development ami | awk {'print $2'}
+     register: imageuuid
+
+   - debug:
+       var: imageuuid
+       verbosity: 2
+
+   - name: Checking to see if blueprint build is complete
+     shell: composer-cli compose status | sort -k2M -k3n -k4  | tail -1 | awk {'print $2'}
+     register: composestatus
+     until: composestatus.stdout == 'FINISHED'
+     retries: 10
+     delay: 120
+
+
+   - debug:
+       var: composestatus
+       verbosity: 2
+
+   - name: Download blueprint to image on host
+     shell: composer-cli compose image {{ imageuuid.stdout }}
+
+   - name: Cleanup blueprint on host
+     shell: composer-cli compose delete {{ imageuuid.stdout }}
+
+   - name: Changing AMI image to system date and time
+     shell: mv {{ imageuuid.stdout }}-disk.ami RHEL-{{ ansible_distribution_version }}-{{ ansible_date_time.date }}-disk.ami

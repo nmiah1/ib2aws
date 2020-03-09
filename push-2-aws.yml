@@ -13,6 +13,7 @@
       object: /ami/RHEL-{{ ansible_distribution_version }}-{{ ansible_date_time.date }}-disk.ami
       src: /home/{{ ansible_user_id }}/RHEL-{{ ansible_distribution_version }}-{{ ansible_date_time.date }}-disk.ami
       mode: put
+      no_log: true
 
   - name: Change containers.json for new image
     blockinfile:

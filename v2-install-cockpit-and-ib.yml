@@ -1,0 +1,55 @@
+---
+
+- name: "Setuping up Cockpit and Image Builder on the host"
+  hosts: localhost
+  connection: local
+  become: true
+  gather_facts: true
+  tasks:
+
+  - name: Update packages on machine
+    yum: 
+      name: '*'
+      state: latest
+
+
+  - name: Install packages required for Cockpit and IB
+    yum:
+      name: "{{ packages }}"
+    vars: 
+      packages:
+      - lorax-composer
+      - cockpit-composer
+      - composer-cli
+      - firewalld
+
+  - name: Start and enable lorax-composer service
+    systemd:
+      name: lorax-composer.socket
+      state: started
+      enabled: yes
+
+  - name: Start and enable cockpit service
+    systemd:
+      name: cockpit.socket
+      state: started
+      enabled: yes
+
+  - name: Setup Firewalld
+    firewalld:
+      service: cockpit
+      permanent: yes
+      state: enabled
+
+  - name: Locating username on host machine
+    shell: whoami
+    register: current_user
+  
+  - debug: 
+      var: current_user
+      verbosity: 2
+
+  - name: Adding user to Weldr group
+    user:
+      name: "{{ current_user.stdout }}"
+      group: weldr

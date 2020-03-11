@@ -33,3 +33,4 @@
 
    - name: Changing AMI image to system date and time
      shell: mv {{ imageuuid.stdout }}-disk.ami RHEL-{{ ansible_distribution_version }}-{{ ansible_date_time.date }}-disk.ami
+

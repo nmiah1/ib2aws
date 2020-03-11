@@ -14,7 +14,7 @@
        verbosity: 2
 
    - name: Checking to see if blueprint build is complete
-     shell: composer-cli compose status | sort -k2M -k3n -k4  | tail -1 | awk {'print $2'}
+     shell: composer-cli compose status | sort -k 3 -k 1M -k2 -k4 | tail -1 | awk {'print $2'}
      register: composestatus
      until: composestatus.stdout == 'FINISHED'
      retries: 10
